@@ -24,19 +24,7 @@ services:
 
     # Portas expostas do MANAGER
     ports:
-      - "2375:2375"   # API Docker remota
-      - "2377:2377"   # Controle do Swarm
-      - "7946:7946"   # Comunicação Swarm TCP
-      - "7946:7946/udp"
-      - "4789:4789/udp" # Overlay VXLAN
-
-    environment:
-      - DOCKER_TLS_CERTDIR=
-
-    command: >
-      dockerd
-      --host=unix:///var/run/docker.sock
-      --host=tcp://0.0.0.0:2375
+      - "9000:9000"   
 
     volumes:
       - ../stacks:/stacks
@@ -50,14 +38,6 @@ services:
     networks:
       labnet:
         ipv4_address: 172.31.0.12
-
-    environment:
-      - DOCKER_TLS_CERTDIR=
-
-    command: >
-      dockerd
-      --host=unix:///var/run/docker.sock
-      --host=tcp://0.0.0.0:2375
 
     volumes:
       - ../stacks:/stacks
