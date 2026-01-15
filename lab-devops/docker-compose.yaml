@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
 
   haproxy:
@@ -19,13 +21,26 @@ services:
     networks:
       labnet:
         ipv4_address: 172.31.0.11
+
+    # Portas expostas do MANAGER
     ports:
-      - "2375:2375"
+      - "2375:2375"   # API Docker remota
+      - "2377:2377"   # Controle do Swarm
+      - "7946:7946"   # Comunicação Swarm TCP
+      - "7946:7946/udp"
+      - "4789:4789/udp" # Overlay VXLAN
+
     environment:
       - DOCKER_TLS_CERTDIR=
-    command: dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375
+
+    command: >
+      dockerd
+      --host=unix:///var/run/docker.sock
+      --host=tcp://0.0.0.0:2375
+
     volumes:
       - ../stacks:/stacks
+
     restart: unless-stopped
 
   swarm2:
@@ -35,11 +50,18 @@ services:
     networks:
       labnet:
         ipv4_address: 172.31.0.12
+
     environment:
       - DOCKER_TLS_CERTDIR=
-    command: dockerd --host=unix:///var/run/docker.sock --host=tcp://0.0.0.0:2375
+
+    command: >
+      dockerd
+      --host=unix:///var/run/docker.sock
+      --host=tcp://0.0.0.0:2375
+
     volumes:
       - ../stacks:/stacks
+
     restart: unless-stopped
 
   stack-manager:
@@ -61,10 +83,6 @@ services:
       - ../app.py:/app/app.py
       - ../subir_lab.sh:/app/subir_lab.sh:ro
       - ../destruir_lab.sh:/app/destruir_lab.sh:ro
-    environment:
-      - JENKINS_URL=http://localhost:8080/jenkins
-      - JENKINS_USER=jenkins
-      - JENKINS_TOKEN=11f32f0e212e58f102279c7ed10a624510
     depends_on:
       - swarm1
       - swarm2

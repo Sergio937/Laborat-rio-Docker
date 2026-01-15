@@ -5,6 +5,7 @@ services:
     image: traefik:v2.11
     networks:
       - traefik-public
+      - devops-network
 
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -13,12 +14,13 @@ services:
       - --providers.docker
       - --providers.docker.swarmMode=true
       - --providers.docker.exposedbydefault=false
-
-      # Entrypoint HTTP interno
       - --entrypoints.web.address=:80
-
-      # Dashboard habilitado
       - --api.dashboard=true
+
+    ports:
+      - target: 80
+        published: 80
+        mode: host
 
     deploy:
       mode: replicated
@@ -26,7 +28,6 @@ services:
       placement:
         constraints:
           - node.role == manager
-
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.traefik.rule=PathPrefix(`/traefik`)"
@@ -35,4 +36,6 @@ services:
 
 networks:
   traefik-public:
+    external: true
+  devops-network:
     external: true

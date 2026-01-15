@@ -3,16 +3,18 @@ version: "3.9"
 services:
   portainer:
     image: portainer/portainer-ce:latest
+
     networks:
       - traefik-public
-      - devops-network
 
     volumes:
       - portainer_data:/data
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
 
-    environment:
-      - BASE_URL=/portainer
+    ports:
+      - target: 9000
+        published: 9000
+        mode: host
 
     deploy:
       mode: replicated
@@ -20,7 +22,6 @@ services:
       placement:
         constraints:
           - node.role == manager
-
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.portainer.rule=PathPrefix(`/portainer`)"
@@ -32,6 +33,4 @@ volumes:
 
 networks:
   traefik-public:
-    external: true
-  devops-network:
     external: true
