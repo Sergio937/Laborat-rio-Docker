@@ -144,13 +144,15 @@ log_info "Criando rede traefik-public..."
 docker exec lab-swarm1 docker network create --driver overlay traefik-public 2>/dev/null || true
 log_success "Rede traefik-public criada"
 
+log_info "Criando rede devops-network..."
+docker exec lab-swarm1 docker network create --driver overlay devops-network 2>/dev/null || true
+log_success "Rede devops-network criada"
+
 # ---------------------------
 # Subindo Traefik
 # ---------------------------
 log_info "Fazendo deploy do Traefik stack..."
-cat ../stacks/traefik-stack.yaml | docker exec -i lab-swarm1 sh -c 'cat > /tmp/traefik-stack.yaml'
-
-if docker exec lab-swarm1 docker stack deploy -c /tmp/traefik-stack.yaml traefik; then
+if docker exec lab-swarm1 docker stack deploy -c /stacks/traefik-stack.yaml traefik; then
     log_success "Stack Traefik deployado"
 else
     log_error "Erro ao deployar stack Traefik"
@@ -167,9 +169,7 @@ sleep 5
 # Deploy Portainer
 # ---------------------------
 log_info "Fazendo deploy do Portainer stack..."
-cat ../stacks/portainer-stack.yaml | docker exec -i lab-swarm1 sh -c 'cat > /tmp/portainer-stack.yaml'
-
-if docker exec lab-swarm1 docker stack deploy -c /tmp/portainer-stack.yaml portainer; then
+if docker exec lab-swarm1 docker stack deploy -c /stacks/portainer-stack.yaml portainer; then
     log_success "Stack Portainer deployado"
 else
     log_error "Erro ao deployar stack Portainer"

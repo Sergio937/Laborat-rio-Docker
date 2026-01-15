@@ -1,11 +1,12 @@
-# 🐳 Laboratório Docker
+# 🐳 Laboratório Docker - Stack Manager
 
-Ambiente de laboratório DevOps completo usando Docker Swarm, HAProxy e diversas ferramentas de CI/CD.
+Sistema de gerenciamento de stacks Docker Swarm com interface web Flask.
 
 ## 📋 Descrição
 
-Este laboratório provisiona um ambiente DevOps completo com:
+Aplicação web para gerenciar stacks Docker e provisionar ambiente DevOps completo com:
 
+- **Stack Manager** - Interface web para gerenciar stacks
 - **Docker Swarm** (2 nós: 1 manager + 1 worker)
 - **HAProxy** como load balancer
 - **Traefik** como reverse proxy
@@ -30,16 +31,72 @@ Este laboratório provisiona um ambiente DevOps completo com:
 └────────────────┘   └──────────────────┘
 ```
 
-## 🚀 Como Usar
+## 🚀 Deploy - Modo Homologação (Linux)
 
 ### Pré-requisitos
 
-- Docker
-- Docker Compose
+- Docker Engine 20.10+
+- Docker Compose V2
+- Linux (Ubuntu/Debian/CentOS/RHEL)
 
-### Subir o Laboratório
+### Deploy Rápido
 
 ```bash
+# Dar permissão de execução
+chmod +x deploy-homologacao.sh
+
+# Executar deploy
+./deploy-homologacao.sh
+```
+
+O script irá:
+1. ✅ Verificar dependências (Docker e Docker Compose)
+2. 🛑 Parar containers antigos (se existirem)
+3. 🏗️ Construir a imagem Docker
+4. 🚀 Subir o container em modo homologação
+5. ✓ Validar que o serviço está rodando
+
+### Acesso
+
+**Stack Manager:** http://localhost:5000
+
+### Comandos Úteis
+
+```bash
+# Ver logs em tempo real
+docker compose -f docker-compose.homologacao.yml logs -f
+
+# Parar o ambiente
+docker compose -f docker-compose.homologacao.yml down
+
+# Reiniciar
+docker compose -f docker-compose.homologacao.yml restart
+
+# Ver status
+docker compose -f docker-compose.homologacao.yml ps
+```
+
+## 🔧 Modo Desenvolvimento Local
+
+Se preferir rodar diretamente com Python (sem Docker):
+
+```bash
+# Dar permissão de execução
+chmod +x start-homologacao.sh
+
+# Executar
+./start-homologacao.sh
+```
+
+## 🏗️ Laboratório DevOps Completo
+
+Para subir o ambiente completo (Swarm + HAProxy + Stacks):
+
+```bash
+# Dar permissão
+chmod +x subir_lab.sh destruir_lab.sh
+
+# Subir laboratório
 ./subir_lab.sh
 ```
 
@@ -48,11 +105,7 @@ Este script irá:
 2. Criar a estrutura de rede (172.31.0.0/24)
 3. Subir HAProxy e containers Docker-in-Docker
 4. Inicializar cluster Docker Swarm
-5. Fazer deploy das stacks:
-   - Traefik
-   - Portainer
-   - Jenkins
-   - SonarQube
+5. Fazer deploy das stacks (Traefik, Portainer)
 
 ### Destruir o Laboratório
 
@@ -60,37 +113,50 @@ Este script irá:
 ./destruir_lab.sh
 ```
 
-Este script irá:
-1. Desmontar o cluster Swarm
-2. Remover volumes
-3. Parar e remover todos os containers
-4. Limpar recursos do Docker
-
 ## 🌐 Acessos
 
+### Stack Manager (Homologação)
+| Serviço        | URL                  | Porta |
+|----------------|----------------------|-------|
+| Stack Manager  | http://localhost:5000| 5000  |
+
+### Laboratório Completo
 | Serviço     | URL                  | Porta |
 |-------------|----------------------|-------|
 | HAProxy     | http://localhost:8080| 8080  |
 | Portainer   | http://localhost:9000| 9000  |
 | Traefik     | Via HAProxy          | -     |
-| Jenkins     | Via HAProxy          | -     |
-| SonarQube   | Via HAProxy          | -     |
 
 ## 📁 Estrutura do Projeto
 
 ```
 .
-├── destruir_lab.sh              # Script para destruir o laboratório
-├── subir_lab.sh                 # Script para criar o laboratório
-├── lab-devops/
-│   ├── docker-compose.yaml      # Definição dos serviços base
-│   └── haproxy/
-│       └── haproxy.cfg          # Configuração do HAProxy
-└── stacks/
-    ├── jenkins-stack.yaml       # Stack do Jenkins
-    ├── portainer-stack.yaml     # Stack do Portainer
-    ├── sonarqube-stack.yaml     # Stack do SonarQube
-    └── traefik-stack.yaml       # Stack do Traefik
+├── app.py                              # Aplicação Flask principal
+├── Dockerfile                          # Imagem Docker da aplicação
+├── requirements.txt                    # Dependências Python
+├── README.md                          # Este arquivo
+│
+├── deploy-homologacao.sh              # Deploy rápido em Linux
+├── start-homologacao.sh               # Modo dev (Python direto)
+├── docker-compose.homologacao.yml     # Docker Compose para homologação
+│
+├── templates/                         # Templates HTML
+│   └── index.html
+│
+├── static/                            # Arquivos estáticos (CSS/JS)
+│   ├── style.css
+│   └── script.js
+│
+├── stacks/                            # Definições de stacks
+│   ├── portainer-stack.yaml
+│   └── traefik-stack.yaml
+│
+└── lab-devops/                        # Ambiente lab completo
+    ├── docker-compose.yaml
+    ├── subir_lab.sh
+    ├── destruir_lab.sh
+    └── haproxy/
+        └── haproxy.cfg
 ```
 
 ## 🔧 Configuração
@@ -111,38 +177,60 @@ Os dados persistentes são armazenados em volumes Docker:
 
 ## 🛠️ Comandos Úteis
 
-### Verificar status do Swarm
+### Stack Manager
 
 ```bash
+# Ver logs do Stack Manager
+docker compose -f docker-compose.homologacao.yml logs -f
+
+# Rebuild completo
+docker compose -f docker-compose.homologacao.yml down -v
+docker compose -f docker-compose.homologacao.yml up -d --build
+```
+
+### Laboratório Swarm
+
+```bash
+# Verificar status do Swarm
 docker exec lab-swarm1 docker node ls
-```
 
-### Listar serviços rodando
-
-```bash
+# Listar serviços rodando
 docker exec lab-swarm1 docker service ls
+
+# Ver logs de um serviço
+docker exec lab-swarm1 docker service logs <nome-do-serviço>
 ```
 
-### Ver logs de um serviço
+## 🐛 Troubleshooting
+
+### Container não inicia
 
 ```bash
-docker exec lab-swarm1 docker service logs <nome-do-serviço>
+# Ver logs detalhados
+docker compose -f docker-compose.homologacao.yml logs
+
+# Verificar se porta 5000 está em uso
+sudo netstat -tulpn | grep 5000
+```
+
+### Permissão negada no Docker socket
+
+```bash
+# Adicionar usuário ao grupo docker
+sudo usermod -aG docker $USER
+
+# Fazer logout e login novamente
 ```
 
 ## 📝 Notas
 
-- Os containers Swarm rodam em modo privilegiado (Docker-in-Docker)
-- O HAProxy está configurado para fazer proxy das aplicações do Swarm
-- Todos os serviços têm restart policy `unless-stopped`
-
-## 🤝 Contribuições
-
-Sinta-se à vontade para contribuir com melhorias!
+- Stack Manager roda em modo staging (debug desabilitado)
+- Containers Swarm rodam em modo privilegiado (Docker-in-Docker)
+- HAProxy configurado para proxy das aplicações
+- Healthcheck automático para Stack Manager
 
 ## 📄 Licença
 
-Este projeto é livre para uso educacional e de desenvolvimento.
-
----
+Projeto de laboratório para fins educacionais.
 
 **Desenvolvido para fins de laboratório e aprendizado DevOps** 🚀

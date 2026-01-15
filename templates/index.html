@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stack Manager Pro - DevOps Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h2>🚀 Stack Manager</h2>
+            <button onclick="toggleSidebar()" class="sidebar-close">✕</button>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="#dashboard" class="nav-item active" onclick="switchScreen('dashboard')">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="#stacks" class="nav-item" onclick="switchScreen('stacks')">
+                <span class="nav-icon">📦</span>
+                <span class="nav-text">Stacks Ativos</span>
+            </a>
+            <a href="#deploy" class="nav-item" onclick="switchScreen('deploy')">
+                <span class="nav-icon">🚀</span>
+                <span class="nav-text">Deploy</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="cluster-info">
+                <div class="cluster-status">
+                    <span class="status-dot"></span>
+                    <span>Swarm Cluster</span>
+                </div>
+                <small>2 nodes online</small>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <button onclick="toggleSidebar()" class="menu-toggle" title="Menu">
+                <span class="hamburger-icon">☰</span>
+            </button>
+            <h1>🚀 Stack Manager Pro</h1>
+            <div class="topbar-actions">
+                <button onclick="refreshStatus()" class="btn-icon" title="Atualizar">🔄</button>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Dashboard Screen -->
+            <div class="screen active" id="screen-dashboard">
+            <!-- Controle do Lab -->
+            <section class="lab-controls">
+                <h2>🎛️ Controle do Lab</h2>
+                <div class="button-group">
+                    <button onclick="confirmStartLab()" class="btn btn-success">
+                        <span class="icon">▶️</span> Iniciar Lab
+                    </button>
+                    <button onclick="confirmDestroyLab()" class="btn btn-danger">
+                        <span class="icon">💥</span> Destruir Lab
+                    </button>
+                    <button onclick="refreshStatus()" class="btn btn-primary">
+                        <span class="icon">🔄</span> Atualizar
+                    </button>
+                    <button onclick="showCreateStackModal()" class="btn btn-warning">
+                        <span class="icon">➕</span> Nova Stack
+                    </button>
+                </div>
+            </section>
+
+            <section class="dashboard-metrics">
+                <h2>📊 Dashboard</h2>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">📦</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="totalStacks">0</div>
+                            <div class="metric-label">Total Stacks</div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-icon">✅</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="activeStacks">0</div>
+                            <div class="metric-label">Stacks Ativos</div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-icon">🔧</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="totalServices">0</div>
+                            <div class="metric-label">Serviços</div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-icon">🖥️</div>
+                        <div class="metric-content">
+                            <div class="metric-value">2</div>
+                            <div class="metric-label">Nodes Swarm</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>📈 Stacks por Status</h3>
+                        <canvas id="stacksChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>🔄 Atividade Recente</h3>
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+            </section>
+            </div>
+
+            <!-- Stacks Ativos Screen -->
+            <div class="screen" id="screen-stacks">
+            <section class="active-stacks">
+                <h2>📊 Stacks Ativos</h2>
+                <div id="activeStacksList" class="stack-list">
+                    <p class="loading">Carregando...</p>
+                </div>
+            </section>
+            </div>
+
+            <!-- Deploy Screen -->
+            <div class="screen" id="screen-deploy">
+            <section class="available-stacks">
+                <h2>📦 Stacks Disponíveis para Deploy</h2>
+                <div id="availableStacksList" class="stack-grid">
+                    <p class="loading">Carregando...</p>
+                </div>
+            </section>
+            </div>
+        </div>
+
+        <!-- Floating Console Button -->
+        <button onclick="toggleConsoleModal()" class="console-float-btn" title="Abrir Console">
+            💻
+        </button>
+    </div>
+
+    <!-- Modal de Criação de Stack -->
+    <div id="createStackModal" class="modal">
+        <div class="modal-content modal-large">
+            <h3>➕ Criar Nova Stack de API</h3>
+            <form id="createStackForm" onsubmit="createNewStack(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="stackName">Nome da API *</label>
+                        <input type="text" id="stackName" name="stackName" required 
+                               placeholder="ex: minha-api" pattern="[a-z0-9-]+">
+                        <small>Apenas letras minúsculas, números e hífen</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dockerImage">Imagem Docker *</label>
+                        <input type="text" id="dockerImage" name="dockerImage" required 
+                               placeholder="ex: nginx, grafana/grafana, node:18-alpine">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="containerPort">Porta do Container (opcional)</label>
+                        <input type="number" id="containerPort" name="containerPort" 
+                               placeholder="Auto-detectada" min="1" max="65535">
+                        <small>Deixe vazio para detectar automaticamente</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="publicPort">Porta Pública (opcional)</label>
+                        <input type="number" id="publicPort" name="publicPort" 
+                               placeholder="Auto-atribuída" min="1" max="65535">
+                        <small>Deixe vazio para atribuir automaticamente</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="replicas">Réplicas</label>
+                        <input type="number" id="replicas" name="replicas" 
+                               value="1" min="1" max="10">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="network">Network</label>
+                        <input type="text" id="network" name="network" 
+                               value="devops-network" placeholder="devops-network">
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="healthCheck">Health Check Endpoint</label>
+                    <input type="text" id="healthCheck" name="healthCheck" 
+                           placeholder="/health ou /api/health">
+                    <small>Deixe vazio se não tiver health check</small>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Variáveis de Ambiente (opcional)</label>
+                    <div id="envVars">
+                        <div class="env-var-row">
+                            <input type="text" placeholder="CHAVE" class="env-key">
+                            <input type="text" placeholder="valor" class="env-value">
+                            <button type="button" onclick="addEnvVar()" class="btn-icon">➕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>
+                        <input type="checkbox" id="includeDatabase" name="includeDatabase" onchange="toggleDatabaseConfig()">
+                        🗄️ Incluir Banco de Dados
+                    </label>
+                    <small>Cria automaticamente um banco de dados junto com a aplicação</small>
+                </div>
+
+                <div id="databaseConfig" style="display: none;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="databaseType">Tipo de Banco *</label>
+                            <select id="databaseType" name="databaseType">
+                                <option value="mariadb">MariaDB</option>
+                                <option value="mysql">MySQL</option>
+                                <option value="postgres">PostgreSQL</option>
+                                <option value="mongodb">MongoDB</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dbName">Nome do Banco *</label>
+                            <input type="text" id="dbName" name="dbName" placeholder="Ex: meu_banco">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dbUser">Usuário *</label>
+                            <input type="text" id="dbUser" name="dbUser" placeholder="Ex: usuario">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dbPassword">Senha *</label>
+                            <input type="text" id="dbPassword" name="dbPassword" placeholder="Ex: senha123">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>
+                        <input type="checkbox" id="enableCICD" name="enableCICD" onchange="toggleCICDConfig()">
+                        🔄 Habilitar CI/CD com Jenkins
+                    </label>
+                    <small>Cria automaticamente uma pipeline no Jenkins para deploy contínuo</small>
+                </div>
+
+                <div id="cicdConfig" style="display: none;">
+                    <div class="form-group full-width">
+                        <label for="gitCloneUrl">URL do Repositório Git *</label>
+                        <input type="text" id="gitCloneUrl" name="gitCloneUrl" 
+                               placeholder="https://github.com/usuario/projeto.git">
+                        <small>URL do repositório para clone (HTTPS ou SSH)</small>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="gitBranch">Branch</label>
+                            <input type="text" id="gitBranch" name="gitBranch" 
+                                   value="main" placeholder="main">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="buildCommand">Comando de Build</label>
+                            <input type="text" id="buildCommand" name="buildCommand" 
+                                   placeholder="npm install && npm run build">
+                            <small>Deixe vazio se não precisar build</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dockerfilePath">Caminho do Dockerfile</label>
+                            <input type="text" id="dockerfilePath" name="dockerfilePath" 
+                                   value="Dockerfile" placeholder="Dockerfile">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dockerRegistry">Registry Docker</label>
+                            <input type="text" id="dockerRegistry" name="dockerRegistry" 
+                                   placeholder="docker.io/usuario">
+                            <small>Deixe vazio para usar registry local</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>
+                        <input type="checkbox" id="useTraefik" name="useTraefik" checked>
+                        Habilitar Traefik (proxy reverso)
+                    </label>
+                </div>
+
+                <div class="form-group full-width" id="traefikConfig">
+                    <label for="traefikDomain">Domínio Traefik</label>
+                    <input type="text" id="traefikDomain" name="traefikDomain" 
+                           placeholder="api.local.dev">
+                    <small>Domínio para acessar via Traefik</small>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeCreateStackModal()" class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <span class="icon">🚀</span> Criar e Deployar Stack
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Confirmar Ação</h3>
+            <p id="modalMessage">Tem certeza?</p>
+            <div class="modal-buttons">
+                <button onclick="closeModal()" class="btn btn-secondary">Cancelar</button>
+                <button id="confirmButton" onclick="confirmAction()" class="btn btn-primary">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de YAML -->
+    <div id="yamlEditorModal" class="modal">
+        <div class="modal-content modal-large">
+            <h3 id="yamlEditorTitle">📝 Editar YAML da Stack</h3>
+            <textarea id="yamlEditorContent" style="width: 100%; height: 500px; font-family: 'Courier New', monospace; font-size: 13px; background: #1e1e1e; color: #d4d4d4; padding: 15px; border: 1px solid #444; border-radius: 4px;"></textarea>
+            <div class="modal-buttons" style="margin-top: 15px;">
+                <button onclick="closeYamlEditor()" class="btn btn-secondary">Cancelar</button>
+                <button onclick="saveAndDeployYaml()" class="btn btn-success">
+                    <span class="icon">💾</span> Salvar e Redeploy
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Console Modal -->
+    <div id="consoleModal" class="modal">
+        <div class="modal-content modal-large console-modal">
+            <div class="console-header">
+                <h3>💻 Console de Output</h3>
+                <button onclick="toggleConsoleModal()" class="modal-close">✕</button>
+            </div>
+            <div id="console" class="console">
+                <p class="console-info">Aguardando comandos...</p>
+            </div>
+            <div class="console-footer">
+                <button onclick="clearConsole()" class="btn btn-secondary btn-sm">
+                    🗑️ Limpar
+                </button>
+                <button onclick="toggleConsoleModal()" class="btn btn-primary btn-sm">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

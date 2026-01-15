@@ -12,9 +12,14 @@ services:
       - --providers.docker.swarmMode=true
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
+      - --api.dashboard=true
+      - --api.insecure=true
     ports:
       - target: 80
         published: 80
+        mode: host
+      - target: 8080
+        published: 8081
         mode: host
     deploy:
       mode: replicated
