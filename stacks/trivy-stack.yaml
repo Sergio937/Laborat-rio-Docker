@@ -5,37 +5,34 @@ services:
     image: aquasec/trivy:latest
     networks:
       - traefik-public
+      - devops-network
+
     command: server --listen 0.0.0.0:8080
+
     volumes:
       - trivy_cache:/root/.cache/
+
     deploy:
       mode: replicated
       replicas: 1
       placement:
         constraints:
           - node.role == manager
+
       restart_policy:
         condition: on-failure
-        delay: 5s
-        max_attempts: 3
-      update_config:
-        parallelism: 1
-        delay: 10s
-        failure_action: rollback
+
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.trivy.rule=PathPrefix(`/trivy`)"
         - "traefik.http.routers.trivy.entrypoints=web"
         - "traefik.http.services.trivy.loadbalancer.server.port=8080"
-        - "traefik.http.middlewares.trivy-stripprefix.stripprefix.prefixes=/trivy"
-        - "traefik.http.routers.trivy.middlewares=trivy-stripprefix"
-        - "app=trivy"
-        - "environment=homologacao"
 
 volumes:
   trivy_cache:
-    driver: local
 
 networks:
   traefik-public:
+    external: true
+  devops-network:
     external: true

@@ -5,6 +5,7 @@ services:
     image: jenkins/jenkins:lts
     networks:
       - traefik-public
+      - devops-network
 
     volumes:
       - jenkins_data:/var/jenkins_home
@@ -34,6 +35,7 @@ services:
         - "traefik.enable=true"
         - "traefik.http.routers.jenkins.rule=PathPrefix(`/jenkins`)"
         - "traefik.http.routers.jenkins.entrypoints=web"
+        - "traefik.http.routers.jenkins.priority=10"
         - "traefik.http.services.jenkins.loadbalancer.server.port=8080"
 
 volumes:
@@ -41,4 +43,6 @@ volumes:
 
 networks:
   traefik-public:
+    external: true
+  devops-network:
     external: true

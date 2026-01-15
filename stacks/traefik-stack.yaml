@@ -14,22 +14,11 @@ services:
       - --providers.docker.swarmMode=true
       - --providers.docker.exposedbydefault=false
 
-      # Entrypoint HTTP
+      # Entrypoint HTTP interno
       - --entrypoints.web.address=:80
 
-      # Dashboard habilitado (modo homologação)
+      # Dashboard habilitado
       - --api.dashboard=true
-      - --api.insecure=true
-
-    ports:
-      - target: 80
-        published: 80
-        mode: host
-
-      # Porta do dashboard
-      - target: 8080
-        published: 8081
-        mode: host
 
     deploy:
       mode: replicated
@@ -37,6 +26,12 @@ services:
       placement:
         constraints:
           - node.role == manager
+
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.traefik.rule=PathPrefix(`/traefik`)"
+        - "traefik.http.routers.traefik.entrypoints=web"
+        - "traefik.http.services.traefik.loadbalancer.server.port=8080"
 
 networks:
   traefik-public:

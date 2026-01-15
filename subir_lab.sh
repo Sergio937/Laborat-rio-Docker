@@ -2,6 +2,14 @@
 set -e
 
 # ===============================
+# VERIFICA SISTEMA OPERACIONAL
+# ===============================
+if [ "$(uname)" != "Linux" ]; then
+    echo -e "\033[0;31m✗ Este script só pode ser executado em sistemas Linux.\033[0m"
+    exit 1
+fi
+
+# ===============================
 #  CORES E LOG
 # ===============================
 RED='\033[0;31m'
