@@ -190,7 +190,8 @@ def get_available_stacks():
                     'name': stack_name,
                     'file': file,
                     'path': os.path.join(STACKS_DIR, file),
-                    'ports': []
+                    'ports': [],
+                    'urls': []
                 }
                 
                 # Tentar ler informações do arquivo YAML
@@ -199,12 +200,11 @@ def get_available_stacks():
                         content = yaml.safe_load(f)
                         if content and 'services' in content:
                             stack_info['services'] = list(content['services'].keys())
-                            stack_info['urls'] = []
                             
                             # Extrair portas expostas e URLs
                             for service_name, service_config in content['services'].items():
-                                # Extrair URLs dos labels do Traefik
-                                if 'deploy' in service_config and 'labels' in service_config['deploy']:
+                                # Extrair URLs dos labels do Traefik (exceto para Portainer que usa porta direta)
+                                if 'deploy' in service_config and 'labels' in service_config['deploy'] and stack_name != 'portainer':
                                     labels = service_config['deploy']['labels']
                                     path_prefix = None
                                     host_rule = None
@@ -222,9 +222,13 @@ def get_available_stacks():
                                     
                                     # Construir URL baseada nas regras do Traefik
                                     if path_prefix:
-                                        stack_info['urls'].append(f"http://localhost:8080{path_prefix}")
+                                        url = f"http://localhost:8080{path_prefix}"
+                                        if url not in stack_info['urls']:
+                                            stack_info['urls'].append(url)
                                     elif host_rule:
-                                        stack_info['urls'].append(f"http://{host_rule}")
+                                        url = f"http://{host_rule}"
+                                        if url not in stack_info['urls']:
+                                            stack_info['urls'].append(url)
                                 
                                 # Extrair portas publicadas
                                 if 'ports' in service_config:
@@ -232,20 +236,23 @@ def get_available_stacks():
                                         # Novo formato: dict com target/published/mode
                                         if isinstance(port, dict):
                                             if 'published' in port:
-                                                stack_info['ports'].append(str(port['published']))
+                                                port_num = str(port['published'])
+                                                if port_num not in stack_info['ports']:
+                                                    stack_info['ports'].append(port_num)
                                         # Formato antigo: string "host:container"
                                         elif isinstance(port, str) and ':' in port:
                                             public_port = port.split(':')[0]
-                                            stack_info['ports'].append(public_port)
+                                            if public_port not in stack_info['ports']:
+                                                stack_info['ports'].append(public_port)
                                         # Formato simples: apenas número
                                         elif isinstance(port, (int, str)):
-                                            stack_info['ports'].append(str(port))
+                                            port_num = str(port)
+                                            if port_num not in stack_info['ports']:
+                                                stack_info['ports'].append(port_num)
                         else:
                             stack_info['services'] = []
-                            stack_info['urls'] = []
                 except:
                     stack_info['services'] = []
-                    stack_info['urls'] = []
                 
                 stacks.append(stack_info)
     

@@ -1,7 +1,5 @@
-version: "3.9"
-
+version: '3.9'
 services:
-
   haproxy:
     image: haproxy:2.9
     container_name: lab-haproxy
@@ -9,11 +7,12 @@ services:
       labnet:
         ipv4_address: 172.31.0.10
     volumes:
-      - ./haproxy:/usr/local/etc/haproxy
+    - ./haproxy:/usr/local/etc/haproxy
     ports:
-      - "8080:80"
+    - 8080:80
+    - 8084:8084
+    - 9000:9000
     restart: unless-stopped
-
   swarm1:
     image: docker:27-dind
     container_name: lab-swarm1
@@ -21,16 +20,11 @@ services:
     networks:
       labnet:
         ipv4_address: 172.31.0.11
-
-    # Portas expostas do MANAGER
     ports:
-      - "9000:9000"   
-
+    - 9000:9000
     volumes:
-      - ../stacks:/stacks
-
+    - ../stacks:/stacks
     restart: unless-stopped
-
   swarm2:
     image: docker:27-dind
     container_name: lab-swarm2
@@ -38,12 +32,9 @@ services:
     networks:
       labnet:
         ipv4_address: 172.31.0.12
-
     volumes:
-      - ../stacks:/stacks
-
+    - ../stacks:/stacks
     restart: unless-stopped
-
   stack-manager:
     build:
       context: ..
@@ -53,24 +44,23 @@ services:
       labnet:
         ipv4_address: 172.31.0.13
     ports:
-      - "5000:5000"
+    - 5000:5000
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ../stacks:/app/stacks
-      - ../lab-devops:/app/lab-devops
-      - ../templates:/app/templates
-      - ../static:/app/static
-      - ../app.py:/app/app.py
-      - ../subir_lab.sh:/app/subir_lab.sh:ro
-      - ../destruir_lab.sh:/app/destruir_lab.sh:ro
+    - /var/run/docker.sock:/var/run/docker.sock
+    - ../stacks:/app/stacks
+    - ../lab-devops:/app/lab-devops
+    - ../templates:/app/templates
+    - ../static:/app/static
+    - ../app.py:/app/app.py
+    - ../subir_lab.sh:/app/subir_lab.sh:ro
+    - ../destruir_lab.sh:/app/destruir_lab.sh:ro
     depends_on:
-      - swarm1
-      - swarm2
+    - swarm1
+    - swarm2
     restart: unless-stopped
-
 networks:
   labnet:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.31.0.0/24
+      - subnet: 172.31.0.0/24

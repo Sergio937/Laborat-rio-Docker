@@ -123,21 +123,18 @@ async function loadAvailableStacks() {
                             ${stack.services.map(s => `<span class="service-tag">${s}</span>`).join('')}
                         </div>
                     ` : ''}
-                    ${stack.urls && stack.urls.length > 0 ? `
+                    ${(stack.urls && stack.urls.length > 0) || (stack.ports && stack.ports.length > 0) ? `
                         <div class="ports-list">
-                            ${stack.urls.map(url => `
+                            ${stack.urls && stack.urls.length > 0 ? stack.urls.map(url => `
                                 <a href="${url}" target="_blank" class="port-link">
                                     🌐 ${url.replace('http://', '')}
                                 </a>
-                            `).join('')}
-                        </div>
-                    ` : stack.ports && stack.ports.length > 0 ? `
-                        <div class="ports-list">
-                            ${stack.ports.map(port => `
+                            `).join('') : ''}
+                            ${stack.ports && stack.ports.length > 0 ? stack.ports.map(port => `
                                 <a href="http://localhost:${port}" target="_blank" class="port-link">
                                     🌐 localhost:${port}
                                 </a>
-                            `).join('')}
+                            `).join('') : ''}
                         </div>
                     ` : ''}
                 </div>
@@ -179,21 +176,18 @@ async function refreshStatus() {
                 <div class="stack-info-left">
                     <h4>✅ ${capitalizeFirst(stack.name)}</h4>
                     <div class="info">${stack.services} serviço(s) rodando</div>
-                    ${stack.urls && stack.urls.length > 0 ? `
+                    ${(stack.urls && stack.urls.length > 0) || (stack.ports && stack.ports.length > 0) ? `
                         <div class="ports-list-inline">
-                            ${stack.urls.map(url => `
+                            ${stack.urls && stack.urls.length > 0 ? stack.urls.map(url => `
                                 <a href="${url}" target="_blank" class="port-link-small">
                                     🌐 ${url.replace('http://', '')}
                                 </a>
-                            `).join('')}
-                        </div>
-                    ` : stack.ports && stack.ports.length > 0 ? `
-                        <div class="ports-list-inline">
-                            ${stack.ports.map(port => `
+                            `).join('') : ''}
+                            ${stack.ports && stack.ports.length > 0 ? stack.ports.map(port => `
                                 <a href="http://localhost:${port}" target="_blank" class="port-link-small">
                                     🌐 localhost:${port}
                                 </a>
-                            `).join('')}
+                            `).join('') : ''}
                         </div>
                     ` : ''}
                 </div>
