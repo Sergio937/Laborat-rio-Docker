@@ -11,7 +11,6 @@ services:
     ports:
     - 8080:80
     - 8084:8084
-    - 9000:9000
     restart: unless-stopped
   swarm1:
     image: docker:27-dind
